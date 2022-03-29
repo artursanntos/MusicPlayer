@@ -325,12 +325,16 @@ public class Player {
                     device = FactoryRegistry.systemRegistry().createAudioDevice();
                     device.open(decoder = new Decoder());
                     bitstream = new Bitstream(currentSong.getBufferedInputStream());
+
                     Thread t_playingSong = new Thread(new Runnable() {
                         @Override
                         public void run() {
+                            currentFrame = 0;
                             while (true) {
                                 try {
                                     if (!playNextFrame()) break;
+                                    currentFrame++;
+                                    if (playerPaused) break;
                                 } catch (JavaLayerException e) {
                                     e.printStackTrace();
                                 };
@@ -357,6 +361,8 @@ public class Player {
     public void stop() {
     }
 
+    //public void Play
+
     public void pause() {
 
         Thread t_pause = new Thread(new Runnable() {
@@ -365,7 +371,6 @@ public class Player {
                 try {
 
                     lock.lock();
-
                     playerPaused = true;
                     window.updatePlayPauseButtonIcon(playerPaused);
                 }
@@ -373,8 +378,6 @@ public class Player {
                 finally {
                     lock.unlock();
                 }
-
-
             }
         });
 

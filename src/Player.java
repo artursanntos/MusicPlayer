@@ -2,10 +2,12 @@ import com.mpatric.mp3agic.InvalidDataException;
 import com.mpatric.mp3agic.UnsupportedTagException;
 import javazoom.jl.decoder.*;
 import javazoom.jl.player.AudioDevice;
+import javazoom.jl.player.FactoryRegistry;
 import support.PlayerWindow;
 import support.Song;
 
 import java.awt.event.*;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -42,6 +44,8 @@ public class Player {
     private ArrayList<String[]> Musics = new ArrayList<String[]>();
 
     private String[][] queue = {};
+
+    private ArrayList<Song> Songs = new ArrayList<Song>();
 
     public Player(String filePath) {
 
@@ -222,6 +226,8 @@ public class Player {
 
                     Song newSong = window.getNewSong();
 
+                    Songs.add(newSong);
+
                     String[] songInfo = newSong.getDisplayInfo();
 
                     Musics.add(songInfo);
@@ -255,6 +261,7 @@ public class Player {
                     int rmvSong = window.getSelectedIdx();
 
                     Musics.remove(rmvSong);
+                    Songs.remove(rmvSong);
                     getQueueAsArrayAndUpdate();
 
                     System.out.println("Música removida");
@@ -306,6 +313,8 @@ public class Player {
 
                     window.updatePlayingSongInfo(Musics.get(musicIdx)[0], Musics.get(musicIdx)[1], Musics.get(musicIdx)[2]);
 
+                    currentSong = Songs.get(musicIdx);
+
                     playerEnabled = true;
                     playerPaused = false;
 
@@ -313,10 +322,28 @@ public class Player {
                     window.updatePlayPauseButtonIcon(playerPaused);
                     window.setEnabledScrubber(playerEnabled);
 
+                    device = FactoryRegistry.systemRegistry().createAudioDevice();
+                    device.open(decoder = new Decoder());
+                    bitstream = new Bitstream(currentSong.getBufferedInputStream());
+                    Thread t_playingSong = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            while (true) {
+                                try {
+                                    if (!playNextFrame()) break;
+                                } catch (JavaLayerException e) {
+                                    e.printStackTrace();
+                                };
+                            }
+                        }
+                    });
+                    t_playingSong.start();
 
-                }
-
-                finally {
+                } catch (JavaLayerException device) {
+                    device.printStackTrace();
+                } catch (FileNotFoundException bitstream) {
+                    bitstream.printStackTrace();
+                } finally {
                     lock.unlock();
                 }
 

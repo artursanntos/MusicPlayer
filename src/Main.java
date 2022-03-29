@@ -1,5 +1,7 @@
 public class Main {
     public static void main(String[] args) {
-        new Player();
+
+        new Player("alo frejones");
+
     }
 }

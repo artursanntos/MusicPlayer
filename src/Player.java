@@ -6,6 +6,10 @@ import javazoom.jl.player.FactoryRegistry;
 import support.PlayerWindow;
 import support.Song;
 
+import java.awt.event.*;
+import java.io.IOException;
+import java.util.ArrayList;
+
 public class Player {
 
     /**
@@ -31,7 +35,121 @@ public class Player {
     private int currentFrame = 0;
     private int newFrame;
 
-    public Player() {
+    private ArrayList<String[]> Musics = new ArrayList<String[]>();
+
+    private String[][] queue = {};
+
+    public Player(String filePath) {
+
+        ActionListener buttonListenerPlayNow = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                start(filePath);
+            }
+        };
+
+        ActionListener buttonListenerRemove = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                removeFromQueue(filePath);
+            }
+        };
+
+        ActionListener buttonListenerAddSong = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                addToQueue();
+            }
+        };
+
+        ActionListener buttonListenerShuffle = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                resume();
+            }
+        };
+
+        ActionListener buttonListenerPrevious = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                previous();
+            }
+        };
+
+        ActionListener buttonListenerPlayPause = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                resume();
+            }
+        };
+
+        ActionListener buttonListenerStop = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                stop();
+            }
+        };
+
+        ActionListener buttonListenerNext = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                next();
+            }
+        };
+
+        ActionListener buttonListenerRepeat = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                resume();
+            }
+        };
+
+        MouseListener scrubberListenerClick = new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+
+            }
+        };
+
+        MouseMotionListener scrubberListenerMotion = new MouseMotionListener() {
+            @Override
+            public void mouseDragged(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseMoved(MouseEvent e) {
+
+            }
+        };
+
+        this.window = new PlayerWindow(
+                "Artu", queue, buttonListenerPlayNow, buttonListenerRemove,
+                buttonListenerAddSong, buttonListenerShuffle, buttonListenerPrevious,
+                buttonListenerPlayPause, buttonListenerStop, buttonListenerNext,
+                buttonListenerRepeat, scrubberListenerClick, scrubberListenerMotion
+                );
+
     }
 
     //<editor-fold desc="Essential">
@@ -81,18 +199,43 @@ public class Player {
     //</editor-fold>
 
     //<editor-fold desc="Queue Utilities">
-    public void addToQueue(Song song) {
+    public void addToQueue() {
+
+        Thread t_addToQueue = new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+                ActionListener buttonListenerAddtoQ = new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+
+                    }
+                };
+
+            }
+        });
+
+        try {
+            Song newSong = this.window.getNewSong();
+        }
+        catch(InvalidDataException | BitstreamException | UnsupportedTagException | IOException e){
+            System.out.println(e);
+        }
+
     }
 
     public void removeFromQueue(String filePath) {
     }
-    /*
-    public String[][] getQueueAsArray() {
-    }*/
+
+    public void getQueueAsArray() {
+        this.queue = this.Musics.toArray(new String[this.Musics.size()][8]);
+        this.window.updateQueueList(this.queue);
+    }
 
     //</editor-fold>
 
     //<editor-fold desc="Controls">
+
     public void start(String filePath) {
     }
 

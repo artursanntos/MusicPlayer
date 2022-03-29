@@ -73,7 +73,7 @@ public class Player {
         ActionListener buttonListenerShuffle = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                resume();
+                PlayPause();
             }
         };
 
@@ -87,13 +87,7 @@ public class Player {
         ActionListener buttonListenerPlayPause = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-
-                if(playerPaused){
-                    resume();
-                }
-                else {
-                    pause();
-                }
+                PlayPause();
             }
         };
 
@@ -114,7 +108,7 @@ public class Player {
         ActionListener buttonListenerRepeat = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                resume();
+                PlayPause();
             }
         };
 
@@ -326,22 +320,7 @@ public class Player {
                     device.open(decoder = new Decoder());
                     bitstream = new Bitstream(currentSong.getBufferedInputStream());
 
-                    Thread t_playingSong = new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            currentFrame = 0;
-                            while (true) {
-                                try {
-                                    if (!playNextFrame()) break;
-                                    currentFrame++;
-                                    if (playerPaused) break;
-                                } catch (JavaLayerException e) {
-                                    e.printStackTrace();
-                                };
-                            }
-                        }
-                    });
-                    t_playingSong.start();
+                    playing();
 
                 } catch (JavaLayerException device) {
                     device.printStackTrace();
@@ -358,58 +337,42 @@ public class Player {
 
     }
 
+    public void playing(){
+
+        Thread t_playingSong = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true && !playerPaused) {
+                    try {
+                        if (!playNextFrame()) break;
+                        currentFrame++;
+                    } catch (JavaLayerException e) {
+                        e.printStackTrace();
+                    };
+                }
+            }
+        });
+        t_playingSong.start();
+
+    }
+
     public void stop() {
     }
 
     //public void Play
 
-    public void pause() {
+    public void PlayPause() {
 
-        Thread t_pause = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-
-                    lock.lock();
-                    playerPaused = true;
-                    window.updatePlayPauseButtonIcon(playerPaused);
-                }
-
-                finally {
-                    lock.unlock();
-                }
-            }
-        });
-
-        t_pause.start();
-
+        if (!playerPaused) {
+            playerPaused = true;
+            window.updatePlayPauseButtonIcon(playerPaused);
+        } else {
+            playerPaused = false;
+            window.updatePlayPauseButtonIcon(playerPaused);
+            playing();
+        }
     }
 
-    public void resume() {
-
-
-        Thread t_resume = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-
-                    lock.lock();
-
-                    playerPaused = false;
-                    window.updatePlayPauseButtonIcon(playerPaused);
-                }
-
-                finally {
-                    lock.unlock();
-                }
-
-
-            }
-        });
-
-        t_resume.start();
-
-    }
 
     public void next() {
     }

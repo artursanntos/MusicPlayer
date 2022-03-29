@@ -438,6 +438,9 @@ public class PlayerWindow {
         setEnabledScrubber(false);
     }
 
+
+    public int getSelectedIdx() { return queueList.getSelectedRow(); }
+
     /**
      * @return the ID of the selected song in the queue. Should be called whenever the 'Play Now' and 'Remove'
      * buttons are pressed.
@@ -451,6 +454,7 @@ public class PlayerWindow {
      *
      * @return the current value of the scrubber.
      */
+
     public int getScrubberValue() {
         return miniPlayerScrubber.getValue();
     }

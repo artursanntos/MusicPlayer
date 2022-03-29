@@ -247,11 +247,27 @@ public class Player {
                 try {
                     lock.lock();
 
-                    String rmvSong = window.getSelectedSong();
+                    int rmvSong = window.getSelectedIdx();
 
-                    System.out.println(rmvSong);
-
+                    Musics.remove(rmvSong);
                     getQueueAsArrayAndUpdate();
+
+                    System.out.println("Música removida");
+
+
+                    /*
+
+                    Forma mais ineficiente de encontrar o indice da musica que será removida, FUNCIONA!
+
+                    for (int i = 0; i < Musics.size(); i++) {
+                        if( queue[i][5] == rmvSong ){
+                            Musics.remove(i);
+                            getQueueAsArrayAndUpdate();
+                            break;
+                        }
+                    }
+                     */
+
                 }
 
                 finally {

@@ -2,7 +2,6 @@ import com.mpatric.mp3agic.InvalidDataException;
 import com.mpatric.mp3agic.UnsupportedTagException;
 import javazoom.jl.decoder.*;
 import javazoom.jl.player.AudioDevice;
-import javazoom.jl.player.FactoryRegistry;
 import support.PlayerWindow;
 import support.Song;
 
@@ -49,7 +48,7 @@ public class Player {
         ActionListener buttonListenerPlayNow = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                start(filePath);
+                start();
             }
         };
 
@@ -254,7 +253,6 @@ public class Player {
 
                     System.out.println("Música removida");
 
-
                     /*
 
                     Forma mais ineficiente de encontrar o indice da musica que será removida, FUNCIONA!
@@ -290,7 +288,37 @@ public class Player {
 
     //<editor-fold desc="Controls">
 
-    public void start(String filePath) {
+    public void start() {
+        Thread t_PlayNow = new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+                try {
+                    lock.lock();
+
+                    int musicIdx = window.getSelectedIdx();
+
+                    window.updatePlayingSongInfo(Musics.get(musicIdx)[0], Musics.get(musicIdx)[1], Musics.get(musicIdx)[2]);
+
+                    playerEnabled = true;
+                    playerPaused = false;
+
+                    window.setEnabledPlayPauseButton(playerEnabled);
+                    window.updatePlayPauseButtonIcon(playerPaused);
+                    window.setEnabledScrubber(playerEnabled);
+
+
+                }
+
+                finally {
+                    lock.unlock();
+                }
+
+            }
+        });
+
+        t_PlayNow.start();
+
     }
 
     public void stop() {

@@ -10,6 +10,8 @@ import java.awt.event.*;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import java.util.concurrent.locks.Lock;
+
 public class Player {
 
     /**
@@ -201,33 +203,35 @@ public class Player {
     //<editor-fold desc="Queue Utilities">
     public void addToQueue() {
 
-        Thread t_addToQueue = new Thread(new Runnable() {
+        Thread t_addSong = new Thread(new Runnable() {
+
             @Override
             public void run() {
 
-                ActionListener buttonListenerAddtoQ = new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
+                try {
+                    Song newSong = window.getNewSong();
 
-                    }
-                };
+                    String[] songInfo = newSong.getDisplayInfo();
+
+                    Musics.add(songInfo);
+
+                    getQueueAsArrayAndUpdate();
+
+                }
+                catch(InvalidDataException | BitstreamException | UnsupportedTagException | IOException e){
+                    System.out.println(e);
+                }
 
             }
         });
 
-        try {
-            Song newSong = this.window.getNewSong();
-        }
-        catch(InvalidDataException | BitstreamException | UnsupportedTagException | IOException e){
-            System.out.println(e);
-        }
-
+        t_addSong.start();
     }
 
     public void removeFromQueue(String filePath) {
     }
 
-    public void getQueueAsArray() {
+    public void getQueueAsArrayAndUpdate() {
         this.queue = this.Musics.toArray(new String[this.Musics.size()][8]);
         this.window.updateQueueList(this.queue);
     }

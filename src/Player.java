@@ -312,9 +312,14 @@ public class Player {
                     playerEnabled = true;
                     playerPaused = false;
 
+
+                    // Ativando os botões
                     window.setEnabledPlayPauseButton(playerEnabled);
                     window.updatePlayPauseButtonIcon(playerPaused);
                     window.setEnabledScrubber(playerEnabled);
+                    window.setEnabledStopButton(playerEnabled);
+                    window.setEnabledNextButton(playerEnabled);
+                    window.setEnabledPreviousButton(playerEnabled);
 
                     device = FactoryRegistry.systemRegistry().createAudioDevice();
                     device.open(decoder = new Decoder());
@@ -337,15 +342,27 @@ public class Player {
 
     }
 
+    // getSongLength
+    public float getSongLength() {
+        int musicIdx = window.getSelectedIdx();
+        return Songs.get(musicIdx).getMsLength();
+    }
+
     public void playing(){
 
         Thread t_playingSong = new Thread(new Runnable() {
             @Override
             public void run() {
+                float fullLength = getSongLength();
+
+                // Adicionando o tempo no início, mas n atualiza a cada segundo
+                int currentTime = 0;
+                window.setTime(currentTime, (int) fullLength);
+
                 while (true && !playerPaused) {
                     try {
                         if (!playNextFrame()) break;
-                        currentFrame++;
+                        // window.setTime(currentTime, (int) fullLength);
                     } catch (JavaLayerException e) {
                         e.printStackTrace();
                     };

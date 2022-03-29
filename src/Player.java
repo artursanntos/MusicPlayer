@@ -158,7 +158,7 @@ public class Player {
         };
 
         this.window = new PlayerWindow(
-                "Artu", queue, buttonListenerPlayNow, buttonListenerRemove,
+                "Sportify", queue, buttonListenerPlayNow, buttonListenerRemove,
                 buttonListenerAddSong, buttonListenerShuffle, buttonListenerPrevious,
                 buttonListenerPlayPause, buttonListenerStop, buttonListenerNext,
                 buttonListenerRepeat, scrubberListenerClick, scrubberListenerMotion

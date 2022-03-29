@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Player {
 
@@ -37,6 +38,8 @@ public class Player {
     private int currentFrame = 0;
     private int newFrame;
 
+    private final Lock lock = new ReentrantLock();
+
     private ArrayList<String[]> Musics = new ArrayList<String[]>();
 
     private String[][] queue = {};
@@ -53,7 +56,7 @@ public class Player {
         ActionListener buttonListenerRemove = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                removeFromQueue(filePath);
+                removeFromQueue();
             }
         };
 
@@ -209,6 +212,9 @@ public class Player {
             public void run() {
 
                 try {
+
+                    lock.lock();
+
                     Song newSong = window.getNewSong();
 
                     String[] songInfo = newSong.getDisplayInfo();
@@ -222,13 +228,41 @@ public class Player {
                     System.out.println(e);
                 }
 
+                finally {
+                    lock.unlock();
+                }
+
             }
         });
 
         t_addSong.start();
     }
 
-    public void removeFromQueue(String filePath) {
+    public void removeFromQueue() {
+        Thread t_rmvFromQueue = new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+
+                try {
+                    lock.lock();
+
+                    String rmvSong = window.getSelectedSong();
+
+                    System.out.println(rmvSong);
+
+                    getQueueAsArrayAndUpdate();
+                }
+
+                finally {
+                    lock.unlock();
+                }
+
+            }
+        });
+
+        t_rmvFromQueue.start();
+
     }
 
     public void getQueueAsArrayAndUpdate() {

@@ -83,7 +83,13 @@ public class Player {
         ActionListener buttonListenerPlayPause = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                resume();
+
+                if(playerPaused){
+                    resume();
+                }
+                else {
+                    pause();
+                }
             }
         };
 
@@ -325,9 +331,54 @@ public class Player {
     }
 
     public void pause() {
+
+        Thread t_pause = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+
+                    lock.lock();
+
+                    playerPaused = true;
+                    window.updatePlayPauseButtonIcon(playerPaused);
+                }
+
+                finally {
+                    lock.unlock();
+                }
+
+
+            }
+        });
+
+        t_pause.start();
+
     }
 
     public void resume() {
+
+
+        Thread t_resume = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+
+                    lock.lock();
+
+                    playerPaused = false;
+                    window.updatePlayPauseButtonIcon(playerPaused);
+                }
+
+                finally {
+                    lock.unlock();
+                }
+
+
+            }
+        });
+
+        t_resume.start();
+
     }
 
     public void next() {

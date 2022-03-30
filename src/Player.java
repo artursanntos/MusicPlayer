@@ -49,6 +49,9 @@ public class Player {
 
     public Player() {
 
+        // Setamos os botões, os que ainda não foram implementados, chamamos a função
+        // next() para preencher escopo e deixamos os botões desabilitados
+
         ActionListener buttonListenerPlayNow = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -73,14 +76,14 @@ public class Player {
         ActionListener buttonListenerShuffle = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                PlayPause();
+                next();
             }
         };
 
         ActionListener buttonListenerPrevious = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                previous();
+                next();
             }
         };
 
@@ -94,7 +97,7 @@ public class Player {
         ActionListener buttonListenerStop = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                stop();
+                next();
             }
         };
 
@@ -108,7 +111,7 @@ public class Player {
         ActionListener buttonListenerRepeat = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                PlayPause();
+                next();
             }
         };
 
@@ -317,9 +320,9 @@ public class Player {
                     window.setEnabledPlayPauseButton(playerEnabled);
                     window.updatePlayPauseButtonIcon(playerPaused);
                     window.setEnabledScrubber(playerEnabled);
-                    window.setEnabledStopButton(playerEnabled);
-                    window.setEnabledNextButton(playerEnabled);
-                    window.setEnabledPreviousButton(playerEnabled);
+                    // window.setEnabledStopButton(playerEnabled);
+                    // window.setEnabledNextButton(playerEnabled);
+                    // window.setEnabledPreviousButton(playerEnabled);
 
                     device = FactoryRegistry.systemRegistry().createAudioDevice();
                     device.open(decoder = new Decoder());
@@ -348,6 +351,7 @@ public class Player {
         return Songs.get(musicIdx).getMsLength();
     }
 
+    // getSongMsPerFrame
     public float getSongMsPerFrame() {
         int musicIdx = window.getSelectedIdx();
         return Songs.get(musicIdx).getMsPerFrame();
@@ -380,9 +384,13 @@ public class Player {
         t_playingSong.start();
 
     }
-
+    /*
     public void stop() {
-    }
+        if (!playerPaused) {
+            playerPaused = true;
+            window.updatePlayPauseButtonIcon(playerPaused);
+        }
+    }*/
 
     //public void Play
 
@@ -401,9 +409,9 @@ public class Player {
 
     public void next() {
     }
-
+    /*
     public void previous() {
-    }
+    }*/
     //</editor-fold>
 
     //<editor-fold desc="Getters and Setters">

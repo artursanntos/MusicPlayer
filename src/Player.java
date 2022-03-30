@@ -47,7 +47,7 @@ public class Player {
 
     private ArrayList<Song> Songs = new ArrayList<Song>();
 
-    public Player(String filePath) {
+    public Player() {
 
         ActionListener buttonListenerPlayNow = new ActionListener() {
             @Override
@@ -348,6 +348,11 @@ public class Player {
         return Songs.get(musicIdx).getMsLength();
     }
 
+    public float getSongMsPerFrame() {
+        int musicIdx = window.getSelectedIdx();
+        return Songs.get(musicIdx).getMsPerFrame();
+    }
+
     public void playing(){
 
         Thread t_playingSong = new Thread(new Runnable() {
@@ -357,12 +362,15 @@ public class Player {
 
                 // Adicionando o tempo no início, mas n atualiza a cada segundo
                 int currentTime = 0;
-                window.setTime(currentTime, (int) fullLength);
+                float ms = getSongMsPerFrame();
+                ms = (int) ms;
+
 
                 while (true && !playerPaused) {
                     try {
                         if (!playNextFrame()) break;
-                        // window.setTime(currentTime, (int) fullLength);
+                        currentTime+=1;
+                        window.setTime((int) (currentTime * ms), (int) fullLength);
                     } catch (JavaLayerException e) {
                         e.printStackTrace();
                     };

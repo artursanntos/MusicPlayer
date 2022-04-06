@@ -35,9 +35,11 @@ public class Player {
     private boolean shuffle = false;
     private boolean playerEnabled = false;
     private boolean playerPaused = true;
+    private boolean newPlay = false;
     private Song currentSong;
     private int currentFrame = 0;
     private int newFrame;
+    private int currentTime = 0;
 
     private final Lock lock = new ReentrantLock();
 
@@ -212,85 +214,55 @@ public class Player {
     //<editor-fold desc="Queue Utilities">
     public void addToQueue() {
 
-        Thread t_addSong = new Thread(new Runnable() {
+        try {
+            Song newSong = window.getNewSong();
 
-            @Override
-            public void run() {
+            Songs.add(newSong);
 
-                try {
+            String[] songInfo = newSong.getDisplayInfo();
 
-                    lock.lock();
+            Musics.add(songInfo);
 
-                    Song newSong = window.getNewSong();
+            getQueueAsArrayAndUpdate();
 
-                    Songs.add(newSong);
-
-                    String[] songInfo = newSong.getDisplayInfo();
-
-                    Musics.add(songInfo);
-
-                    getQueueAsArrayAndUpdate();
-
-                }
-                catch(InvalidDataException | BitstreamException | UnsupportedTagException | IOException e){
-                    System.out.println(e);
-                }
-
-                finally {
-                    lock.unlock();
-                }
-
-            }
-        });
-
-        t_addSong.start();
+        }
+        catch(InvalidDataException | BitstreamException | UnsupportedTagException | IOException e){
+            System.out.println(e);
+        }
     }
 
     public void removeFromQueue() {
-        Thread t_rmvFromQueue = new Thread(new Runnable() {
-            @Override
-            public void run() {
+        try {
 
+            int rmvSong = window.getSelectedIdx();
 
-                try {
-                    lock.lock();
+            Musics.remove(rmvSong);
+            Songs.remove(rmvSong);
+            getQueueAsArrayAndUpdate();
 
-                    int rmvSong = window.getSelectedIdx();
+            System.out.println("Música removida");
 
-                    Musics.remove(rmvSong);
-                    Songs.remove(rmvSong);
+            /*
+
+            Forma mais ineficiente de encontrar o indice da musica que será removida, FUNCIONA!
+
+            for (int i = 0; i < Musics.size(); i++) {
+                if( queue[i][5] == rmvSong ){
+                    Musics.remove(i);
                     getQueueAsArrayAndUpdate();
-
-                    System.out.println("Música removida");
-
-                    /*
-
-                    Forma mais ineficiente de encontrar o indice da musica que será removida, FUNCIONA!
-
-                    for (int i = 0; i < Musics.size(); i++) {
-                        if( queue[i][5] == rmvSong ){
-                            Musics.remove(i);
-                            getQueueAsArrayAndUpdate();
-                            break;
-                        }
-                    }
-                     */
-
+                    break;
                 }
-
-                finally {
-                    lock.unlock();
-                }
-
             }
-        });
+             */
 
-        t_rmvFromQueue.start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
     }
 
     public void getQueueAsArrayAndUpdate() {
-        this.queue = this.Musics.toArray(new String[this.Musics.size()][8]);
+        this.queue = this.Musics.toArray(new String[this.Musics.size()][7]);
         this.window.updateQueueList(this.queue);
     }
 
@@ -299,85 +271,81 @@ public class Player {
     //<editor-fold desc="Controls">
 
     public void start() {
-        Thread t_PlayNow = new Thread(new Runnable() {
-            @Override
-            public void run() {
 
-                try {
-                    lock.lock();
+        try {
 
-                    int musicIdx = window.getSelectedIdx();
+            newPlay = true;
 
-                    window.updatePlayingSongInfo(Musics.get(musicIdx)[0], Musics.get(musicIdx)[1], Musics.get(musicIdx)[2]);
+            int musicIdx = window.getSelectedIdx();
 
-                    currentSong = Songs.get(musicIdx);
+            window.updatePlayingSongInfo(Musics.get(musicIdx)[0], Musics.get(musicIdx)[1], Musics.get(musicIdx)[2]);
 
-                    playerEnabled = true;
-                    playerPaused = false;
+            currentSong = Songs.get(musicIdx);
+
+            playerEnabled = true;
+            playerPaused = false;
 
 
-                    // Ativando os botões
-                    window.setEnabledPlayPauseButton(playerEnabled);
-                    window.updatePlayPauseButtonIcon(playerPaused);
-                    window.setEnabledScrubber(playerEnabled);
-                    // window.setEnabledStopButton(playerEnabled);
-                    // window.setEnabledNextButton(playerEnabled);
-                    // window.setEnabledPreviousButton(playerEnabled);
+            // Ativando os botões
+            window.setEnabledPlayPauseButton(playerEnabled);
+            window.updatePlayPauseButtonIcon(playerPaused);
+            window.setEnabledScrubber(playerEnabled);
+            // window.setEnabledStopButton(playerEnabled);
+            // window.setEnabledNextButton(playerEnabled);
+            // window.setEnabledPreviousButton(playerEnabled);
 
-                    device = FactoryRegistry.systemRegistry().createAudioDevice();
-                    device.open(decoder = new Decoder());
-                    bitstream = new Bitstream(currentSong.getBufferedInputStream());
+            device = FactoryRegistry.systemRegistry().createAudioDevice();
+            device.open(decoder = new Decoder());
+            bitstream = new Bitstream(currentSong.getBufferedInputStream());
 
-                    playing();
+            skipToFrame(0);
+            newPlay = false;
+            currentTime = 0;
+            playing(currentSong);
 
-                } catch (JavaLayerException device) {
-                    device.printStackTrace();
-                } catch (FileNotFoundException bitstream) {
-                    bitstream.printStackTrace();
-                } finally {
-                    lock.unlock();
-                }
-
-            }
-        });
-
-        t_PlayNow.start();
+        } catch (JavaLayerException device) {
+            device.printStackTrace();
+        } catch (FileNotFoundException bitstream) {
+            bitstream.printStackTrace();
+        }
 
     }
 
     // getSongLength
-    public float getSongLength() {
-        int musicIdx = window.getSelectedIdx();
-        return Songs.get(musicIdx).getMsLength();
+    public float getSongLength(Song currentSong) {
+        return currentSong.getMsLength();
     }
 
     // getSongMsPerFrame
-    public float getSongMsPerFrame() {
-        int musicIdx = window.getSelectedIdx();
-        return Songs.get(musicIdx).getMsPerFrame();
+    public float getSongMsPerFrame(Song currentSong) {
+        return currentSong.getMsPerFrame();
     }
 
-    public void playing(){
+    public void playing(Song currentSong){
 
         Thread t_playingSong = new Thread(new Runnable() {
             @Override
             public void run() {
-                float fullLength = getSongLength();
+
+                float fullLength = getSongLength(currentSong);
 
                 // Adicionando o tempo no início, mas n atualiza a cada segundo
-                int currentTime = 0;
-                float ms = getSongMsPerFrame();
+
+                float ms = getSongMsPerFrame(currentSong);
                 ms = (int) ms;
 
 
                 while (true && !playerPaused) {
+                    lock.lock();
                     try {
                         if (!playNextFrame()) break;
+                        if (newPlay) break;
                         currentTime+=1;
                         window.setTime((int) (currentTime * ms), (int) fullLength);
                     } catch (JavaLayerException e) {
                         e.printStackTrace();
                     };
+                    lock.unlock();
                 }
             }
         });
@@ -402,7 +370,7 @@ public class Player {
         } else {
             playerPaused = false;
             window.updatePlayPauseButtonIcon(playerPaused);
-            playing();
+            playing(currentSong);
         }
     }
 

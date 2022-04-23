@@ -78,14 +78,20 @@ public class Player {
         ActionListener buttonListenerShuffle = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                next();
+                stop();
             }
         };
 
         ActionListener buttonListenerPrevious = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                next();
+                try {
+                    previous();
+                } catch (JavaLayerException ex) {
+                    ex.printStackTrace();
+                } catch (FileNotFoundException ex) {
+                    ex.printStackTrace();
+                }
             }
         };
 
@@ -99,21 +105,27 @@ public class Player {
         ActionListener buttonListenerStop = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                next();
+                stop();
             }
         };
 
         ActionListener buttonListenerNext = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                next();
+                try {
+                    next();
+                } catch (JavaLayerException ex) {
+                    ex.printStackTrace();
+                } catch (FileNotFoundException ex) {
+                    ex.printStackTrace();
+                }
             }
         };
 
         ActionListener buttonListenerRepeat = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                next();
+                stop();
             }
         };
 
@@ -291,8 +303,8 @@ public class Player {
             window.updatePlayPauseButtonIcon(playerPaused);
             window.setEnabledScrubber(playerEnabled);
             // window.setEnabledStopButton(playerEnabled);
-            // window.setEnabledNextButton(playerEnabled);
-            // window.setEnabledPreviousButton(playerEnabled);
+            window.setEnabledNextButton(playerEnabled);
+            window.setEnabledPreviousButton(playerEnabled);
 
             device = FactoryRegistry.systemRegistry().createAudioDevice();
             device.open(decoder = new Decoder());
@@ -352,13 +364,13 @@ public class Player {
         t_playingSong.start();
 
     }
-    /*
+
     public void stop() {
         if (!playerPaused) {
             playerPaused = true;
             window.updatePlayPauseButtonIcon(playerPaused);
         }
-    }*/
+    }
 
     //public void Play
 
@@ -375,11 +387,59 @@ public class Player {
     }
 
 
-    public void next() {
+    public void next() throws JavaLayerException, FileNotFoundException {
+        newPlay = true;
+        int musicIdx = 0;
+        int actual = Songs.indexOf(currentSong);
+        if (actual != Songs.size() - 1) {
+            musicIdx = actual + 1;
+        }
+
+
+        window.updatePlayingSongInfo(Musics.get(musicIdx)[0], Musics.get(musicIdx)[1], Musics.get(musicIdx)[2]);
+
+        currentSong = Songs.get(musicIdx);
+
+        playerPaused = false;
+        window.updatePlayPauseButtonIcon(playerPaused);
+
+        device = FactoryRegistry.systemRegistry().createAudioDevice();
+        device.open(decoder = new Decoder());
+        bitstream = new Bitstream(currentSong.getBufferedInputStream());
+
+        skipToFrame(0);
+        newPlay = false;
+        currentTime = 0;
+        playing(currentSong);
+
     }
-    /*
-    public void previous() {
-    }*/
+
+    public void previous() throws JavaLayerException, FileNotFoundException {
+        newPlay = true;
+        int musicIdx = Songs.size() - 1;
+        int actual = Songs.indexOf(currentSong);
+        if (actual != 0) {
+
+            musicIdx = actual - 1;
+        }
+
+
+        window.updatePlayingSongInfo(Musics.get(musicIdx)[0], Musics.get(musicIdx)[1], Musics.get(musicIdx)[2]);
+
+        currentSong = Songs.get(musicIdx);
+
+        playerPaused = false;
+        window.updatePlayPauseButtonIcon(playerPaused);
+
+        device = FactoryRegistry.systemRegistry().createAudioDevice();
+        device.open(decoder = new Decoder());
+        bitstream = new Bitstream(currentSong.getBufferedInputStream());
+
+        skipToFrame(0);
+        newPlay = false;
+        currentTime = 0;
+        playing(currentSong);
+    }
     //</editor-fold>
 
     //<editor-fold desc="Getters and Setters">

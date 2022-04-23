@@ -350,13 +350,18 @@ public class Player {
                 while (true && !playerPaused) {
                     lock.lock();
                     try {
-                        if (!playNextFrame()) break;
+                        if (!playNextFrame()){
+                         next();
+                        }
                         if (newPlay) break;
                         currentTime+=1;
                         window.setTime((int) (currentTime * ms), (int) fullLength);
                     } catch (JavaLayerException e) {
                         e.printStackTrace();
-                    };
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                    }
+                    ;
                     lock.unlock();
                 }
             }

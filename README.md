@@ -26,8 +26,19 @@
 
 ## Primeira Entrega
 
-- Funcionalidades de adicionar e remover uma música à lista de reprodução.
-- PlayNow, dand início à reprodução do áudio da música.
-- Implementação das funcionalidades de Pause e Play.
+### Funcionalidades
+- Adicionar e remover uma música à lista de reprodução.
+- PlayNow, dando início à reprodução do áudio da música.
+- Pause e Play.
 - Atualização da barra de scrubber durante a reprodução da música.
 - Atualização do tempo reproduzido durante a reprodução.
+
+## Segunda Entrega
+
+### Funcionalidades
+- Passar para a próxima música ao clicar no botão de avançar.
+  - Se for a última música, voltar para a primeira.
+- Voltar para a música anterior ao clicar no botão de voltar.
+  - Se for a primeira música, pular para a última.
+- Tocar a próxima música com o fim da anterior.
+- Arrastar e soltar o scrubber muda o ponto que a música está reproduzindo.

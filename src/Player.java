@@ -158,9 +158,6 @@ public class Player {
 
                 int newFrame = (int) (time / msPerFrame);
 
-                System.out.println("Novo Frame " + newFrame);
-
-
 
                 window.setTime((int) (time * msPerFrame), (int) currentSong.getMsLength());
 
@@ -386,7 +383,6 @@ public class Player {
                         }
                         if (newPlay) break;
                         currentFrame +=1;
-                        System.out.println("Frame atual: " + currentFrame);
                         window.setTime((int) (currentFrame * ms), (int) fullLength);
                     } catch (JavaLayerException e) {
                         e.printStackTrace();

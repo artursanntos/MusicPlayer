@@ -137,11 +137,43 @@ public class Player {
 
             @Override
             public void mousePressed(MouseEvent e) {
-
+                playerPaused = true;
             }
 
             @Override
             public void mouseReleased(MouseEvent e) {
+
+
+                try {
+                    device = FactoryRegistry.systemRegistry().createAudioDevice();
+                    device.open(decoder = new Decoder());
+                    bitstream = new Bitstream(currentSong.getBufferedInputStream());
+                } catch (FileNotFoundException ex) {
+                    ex.printStackTrace();
+                } catch (JavaLayerException ex) {
+                    ex.printStackTrace();
+                }
+
+                int time = window.getScrubberValue();
+                float msPerFrame = currentSong.getMsPerFrame();
+
+                int newFrame = (int) (time / msPerFrame);
+
+                System.out.println("Novo Frame " + newFrame);
+
+
+
+                window.setTime((int) (time * msPerFrame), (int) currentSong.getMsLength());
+
+                try {
+                    skipToFrame(newFrame);
+                    currentTime = newFrame;
+                    playerPaused = false;
+                    playing(currentSong);
+                } catch (BitstreamException ex) {
+                    ex.printStackTrace();
+                }
+
 
             }
 
@@ -159,6 +191,7 @@ public class Player {
         MouseMotionListener scrubberListenerMotion = new MouseMotionListener() {
             @Override
             public void mouseDragged(MouseEvent e) {
+
 
             }
 
@@ -215,11 +248,10 @@ public class Player {
      */
     private void skipToFrame(int newFrame) throws BitstreamException {
         // TODO Is this thread safe?
-        if (newFrame > currentFrame) {
-            int framesToSkip = newFrame - currentFrame;
-            boolean condition = true;
-            while (framesToSkip-- > 0 && condition) condition = skipNextFrame();
-        }
+
+        int framesToSkip = newFrame;
+        boolean condition = true;
+        while (framesToSkip-- > 0 && condition) condition = skipNextFrame();
     }
     //</editor-fold>
 
@@ -355,6 +387,7 @@ public class Player {
                         }
                         if (newPlay) break;
                         currentTime+=1;
+                        System.out.println("Frame atual: " + currentTime);
                         window.setTime((int) (currentTime * ms), (int) fullLength);
                     } catch (JavaLayerException e) {
                         e.printStackTrace();

@@ -438,7 +438,9 @@ public class PlayerWindow {
         setEnabledScrubber(false);
     }
 
-
+    /**
+     * @return the Index of the selected song in the queue.
+     */
     public int getSelectedIdx() { return queueList.getSelectedRow(); }
 
     /**

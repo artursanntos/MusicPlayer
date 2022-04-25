@@ -39,7 +39,6 @@ public class Player {
     private Song currentSong;
     private int currentFrame = 0;
     private int newFrame;
-    private int currentTime = 0;
 
     private final Lock lock = new ReentrantLock();
 
@@ -167,7 +166,7 @@ public class Player {
 
                 try {
                     skipToFrame(newFrame);
-                    currentTime = newFrame;
+                    currentFrame = newFrame;
                     playerPaused = false;
                     playing(currentSong);
                 } catch (BitstreamException ex) {
@@ -344,7 +343,7 @@ public class Player {
 
             skipToFrame(0);
             newPlay = false;
-            currentTime = 0;
+            currentFrame = 0;
             playing(currentSong);
 
         } catch (JavaLayerException device) {
@@ -386,9 +385,9 @@ public class Player {
                          next();
                         }
                         if (newPlay) break;
-                        currentTime+=1;
-                        System.out.println("Frame atual: " + currentTime);
-                        window.setTime((int) (currentTime * ms), (int) fullLength);
+                        currentFrame +=1;
+                        System.out.println("Frame atual: " + currentFrame);
+                        window.setTime((int) (currentFrame * ms), (int) fullLength);
                     } catch (JavaLayerException e) {
                         e.printStackTrace();
                     } catch (FileNotFoundException e) {
@@ -447,7 +446,7 @@ public class Player {
 
         skipToFrame(0);
         newPlay = false;
-        currentTime = 0;
+        currentFrame = 0;
         playing(currentSong);
 
     }
@@ -475,7 +474,7 @@ public class Player {
 
         skipToFrame(0);
         newPlay = false;
-        currentTime = 0;
+        currentFrame = 0;
         playing(currentSong);
     }
     //</editor-fold>

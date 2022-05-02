@@ -10,6 +10,7 @@ import java.awt.event.*;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Random;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -77,7 +78,12 @@ public class Player {
         ActionListener buttonListenerShuffle = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                stop();
+                if(shuffle == false && repeat == false){
+                    shuffle = true;
+                }
+                else{
+                    shuffle = false;
+                }
             }
         };
 
@@ -124,7 +130,7 @@ public class Player {
         ActionListener buttonListenerRepeat = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if(repeat == false){
+                if(repeat == false && shuffle == false){
                     repeat = true;
                 }
                 else{
@@ -384,8 +390,11 @@ public class Player {
                     lock.lock();
                     try {
                         if (!playNextFrame()){
-                            if(repeat == false){
+                            if(repeat == false && shuffle == false){
                                 next();
+                            }
+                            else if(shuffle == true){
+                                randomSong();
                             }
                             else{
                                 playAgain();
@@ -466,7 +475,6 @@ public class Player {
             musicIdx = actual - 1;
         }
 
-
         window.updatePlayingSongInfo(Musics.get(musicIdx)[0], Musics.get(musicIdx)[1], Musics.get(musicIdx)[2]);
 
         currentSong = Songs.get(musicIdx);
@@ -490,6 +498,34 @@ public class Player {
         int actual = Songs.indexOf(currentSong);
 
         window.updatePlayingSongInfo(Musics.get(actual)[0], Musics.get(actual)[1], Musics.get(actual)[2]);
+
+        playerPaused = false;
+        window.updatePlayPauseButtonIcon(playerPaused);
+
+        device = FactoryRegistry.systemRegistry().createAudioDevice();
+        device.open(decoder = new Decoder());
+        bitstream = new Bitstream(currentSong.getBufferedInputStream());
+
+        skipToFrame(0);
+        newPlay = false;
+        currentFrame = 0;
+        playing(currentSong);
+
+    }
+
+    public void randomSong() throws JavaLayerException, FileNotFoundException {
+
+        newPlay = true;
+
+        int numberofSongs = Songs.size();
+
+        Random generator = new Random();
+
+        int idxMusicSelect = generator.nextInt(numberofSongs);
+
+        currentSong = Songs.get(idxMusicSelect);
+
+        window.updatePlayingSongInfo(Musics.get(idxMusicSelect)[0], Musics.get(idxMusicSelect)[1], Musics.get(idxMusicSelect)[2]);
 
         playerPaused = false;
         window.updatePlayPauseButtonIcon(playerPaused);

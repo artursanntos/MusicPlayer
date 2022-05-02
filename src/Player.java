@@ -124,7 +124,12 @@ public class Player {
         ActionListener buttonListenerRepeat = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                stop();
+                if(repeat == false){
+                    repeat = true;
+                }
+                else{
+                    repeat = false;
+                }
             }
         };
 
@@ -379,7 +384,12 @@ public class Player {
                     lock.lock();
                     try {
                         if (!playNextFrame()){
-                         next();
+                            if(repeat == false){
+                                next();
+                            }
+                            else{
+                                playAgain();
+                            }
                         }
                         if (newPlay) break;
                         currentFrame +=1;
@@ -472,6 +482,27 @@ public class Player {
         newPlay = false;
         currentFrame = 0;
         playing(currentSong);
+    }
+
+    public void playAgain() throws JavaLayerException, FileNotFoundException {
+
+        newPlay = true;
+        int actual = Songs.indexOf(currentSong);
+
+        window.updatePlayingSongInfo(Musics.get(actual)[0], Musics.get(actual)[1], Musics.get(actual)[2]);
+
+        playerPaused = false;
+        window.updatePlayPauseButtonIcon(playerPaused);
+
+        device = FactoryRegistry.systemRegistry().createAudioDevice();
+        device.open(decoder = new Decoder());
+        bitstream = new Bitstream(currentSong.getBufferedInputStream());
+
+        skipToFrame(0);
+        newPlay = false;
+        currentFrame = 0;
+        playing(currentSong);
+
     }
     //</editor-fold>
 

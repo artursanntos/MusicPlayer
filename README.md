@@ -42,3 +42,14 @@
   - Se for a primeira música, pular para a última.
 - Tocar a próxima música com o fim da anterior.
 - Arrastar e soltar o scrubber muda o ponto que a música está reproduzindo.
+
+## Terceira Entrega
+
+### Funcionalidades
+- Implementação da opção Shuffle.
+  - Aleatorizar a ordem de reprodução.
+- Implementação da opção Repeat.
+  - Ao terminar a lista de reprodução volta para o início.
+- Stop.
+- Correção de bug que não atualizava o tempo corretamente ao trocar de música.
+- Comentários adicionados no código.

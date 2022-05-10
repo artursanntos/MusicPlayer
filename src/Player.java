@@ -45,6 +45,8 @@ public class Player {
 
     private ArrayList<String[]> Musics = new ArrayList<String[]>();
 
+    private ArrayList<String[]> RandomQueue = new ArrayList<String[]>();
+
     private String[][] queue = {};
 
     private ArrayList<Song> Songs = new ArrayList<Song>();
@@ -78,7 +80,7 @@ public class Player {
         ActionListener buttonListenerShuffle = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if(shuffle == false && repeat == false){
+                if(shuffle == false){
                     shuffle = true;
                 }
                 else{
@@ -130,7 +132,7 @@ public class Player {
         ActionListener buttonListenerRepeat = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if(repeat == false && shuffle == false){
+                if(repeat == false){
                     repeat = true;
                 }
                 else{
@@ -390,14 +392,11 @@ public class Player {
                     lock.lock();
                     try {
                         if (!playNextFrame()){
-                            if(repeat == false && shuffle == false){
+                            if(shuffle == false){
                                 next();
                             }
-                            else if(shuffle == true){
-                                randomSong();
-                            }
                             else{
-                                playAgain();
+                                randomSong();
                             }
                         }
                         if (newPlay) break;
@@ -414,6 +413,7 @@ public class Player {
             }
         });
         t_playingSong.start();
+
 
     }
 
@@ -446,23 +446,23 @@ public class Player {
         if (actual != Songs.size() - 1) {
             musicIdx = actual + 1;
         }
+        if (actual == Songs.size() - 1 && repeat == true || actual != Songs.size() - 1) {
+            currentSong = Songs.get(musicIdx);
+            window.updatePlayingSongInfo(Musics.get(musicIdx)[0], Musics.get(musicIdx)[1], Musics.get(musicIdx)[2]);
 
 
-        window.updatePlayingSongInfo(Musics.get(musicIdx)[0], Musics.get(musicIdx)[1], Musics.get(musicIdx)[2]);
+            playerPaused = false;
+            window.updatePlayPauseButtonIcon(playerPaused);
 
-        currentSong = Songs.get(musicIdx);
+            device = FactoryRegistry.systemRegistry().createAudioDevice();
+            device.open(decoder = new Decoder());
+            bitstream = new Bitstream(currentSong.getBufferedInputStream());
 
-        playerPaused = false;
-        window.updatePlayPauseButtonIcon(playerPaused);
-
-        device = FactoryRegistry.systemRegistry().createAudioDevice();
-        device.open(decoder = new Decoder());
-        bitstream = new Bitstream(currentSong.getBufferedInputStream());
-
-        skipToFrame(0);
-        newPlay = false;
-        currentFrame = 0;
-        playing(currentSong);
+            skipToFrame(0);
+            newPlay = false;
+            currentFrame = 0;
+            playing(currentSong);
+        }
 
     }
 
@@ -491,7 +491,7 @@ public class Player {
         currentFrame = 0;
         playing(currentSong);
     }
-
+    /*
     public void playAgain() throws JavaLayerException, FileNotFoundException {
 
         newPlay = true;
@@ -511,7 +511,7 @@ public class Player {
         currentFrame = 0;
         playing(currentSong);
 
-    }
+    }*/
 
     public void randomSong() throws JavaLayerException, FileNotFoundException {
 
@@ -522,6 +522,7 @@ public class Player {
         Random generator = new Random();
 
         int idxMusicSelect = generator.nextInt(numberofSongs);
+
 
         currentSong = Songs.get(idxMusicSelect);
 

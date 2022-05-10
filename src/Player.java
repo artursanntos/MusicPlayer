@@ -46,18 +46,21 @@ public class Player {
 
     private final Lock lock = new ReentrantLock();
 
+    // Musics string array
     private ArrayList<String[]> Musics = new ArrayList<String[]>();
 
     private String[][] queue = {};
 
     private ArrayList<Song> Songs = new ArrayList<Song>();
 
-    private ArrayList<Song> aux = new ArrayList<Song>(); // Array auxiliar para shuffle
+    // Auxiliar array for shuffle
+    private ArrayList<Song> aux = new ArrayList<Song>();
 
     public Player() {
-
-        // Setamos os botões, os que ainda não foram implementados, chamamos a função
-        // next() para preencher escopo e deixamos os botões desabilitados
+        /*
+        We set all of the buttons and listeners. But some of them were not necessary: MouseClicked,
+        MouseDragged, MouseEntered, MouseExited and MouseMoved
+         */
 
         ActionListener buttonListenerPlayNow = new ActionListener() {
             @Override
@@ -148,18 +151,17 @@ public class Player {
         MouseListener scrubberListenerClick = new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
-
             }
 
             @Override
             public void mousePressed(MouseEvent e) {
+                // Pauses the song when the scrubber is pressed
                 playerPaused = true;
             }
 
             @Override
             public void mouseReleased(MouseEvent e) {
-
-
+                // We have to load the song again, because we were having a lot of issues just skipping the frames
                 try {
                     device = FactoryRegistry.systemRegistry().createAudioDevice();
                     device.open(decoder = new Decoder());
@@ -175,9 +177,9 @@ public class Player {
 
                 int newFrame = (int) (time / msPerFrame);
 
-
                 window.setTime((int) (time * msPerFrame), (int) currentSong.getMsLength());
 
+                // Trying to skip to frame and resume the song
                 try {
                     skipToFrame(newFrame);
                     currentFrame = newFrame;
@@ -262,6 +264,8 @@ public class Player {
     private void skipToFrame(int newFrame) throws BitstreamException {
         // TODO Is this thread safe?
 
+        // There used to exist a condition here that made Skip to frame only work to jump forward.
+        // This was a problem and we removed the coindition
         int framesToSkip = newFrame;
         boolean condition = true;
         while (framesToSkip-- > 0 && condition) condition = skipNextFrame();
@@ -269,22 +273,31 @@ public class Player {
     //</editor-fold>
 
     //<editor-fold desc="Queue Utilities">
+    /**
+     * Adds a song to the Queue and updates Queue displayed.
+     *
+     * @throws InvalidDataException
+     * @throws BitstreamException
+     * @throws UnsupportedTagException
+     * @throws IOException
+     */
     public void addToQueue() {
 
         try {
             Song newSong = window.getNewSong();
 
+            // Checking if newSong is null because we were having errors with this
             if (newSong != null) {
                 Songs.add(newSong);
 
                 String[] songInfo = newSong.getDisplayInfo();
 
+                // Add to Musics array in the form of a string
                 Musics.add(songInfo);
 
+                // Update Displayed queue
                 getQueueAsArrayAndUpdate();
             }
-
-
 
         }
         catch(InvalidDataException | BitstreamException | UnsupportedTagException | IOException e){
@@ -292,21 +305,26 @@ public class Player {
         }
     }
 
-
+    /**
+     * Removes a song from the queue and updates the queue that the user sees.
+     *
+     */
     public void removeFromQueue() {
         try {
 
+            // Get music index
             int rmvSong = window.getSelectedIdx();
 
+            // Since it has the same index in both arrays, remove by index in both.
             Musics.remove(rmvSong);
             Songs.remove(rmvSong);
             getQueueAsArrayAndUpdate();
 
-            System.out.println("Música removida");
+            System.out.println("Musica removida"); // Console
 
             /*
 
-            Forma mais ineficiente de encontrar o indice da musica que será removida, FUNCIONA!
+            More inefficient way of finding the index of the song that will be removed, IT ALSO WORKS!
 
             for (int i = 0; i < Musics.size(); i++) {
                 if( queue[i][5] == rmvSong ){
@@ -323,6 +341,10 @@ public class Player {
 
     }
 
+    /**
+     * Updates the queue list. It receives the song as array and updates the queue.
+     * It is called when a song is added or removed.
+     */
     public void getQueueAsArrayAndUpdate() {
         this.queue = this.Musics.toArray(new String[this.Musics.size()][7]);
         this.window.updateQueueList(this.queue);
@@ -332,14 +354,25 @@ public class Player {
 
     //<editor-fold desc="Controls">
 
+    /**
+     * This function is called when Play Now is clicked
+     *
+     * @throws JavaLayerException
+     * @throws FileNotFoundException
+     *
+     */
+
     public void start() {
 
         try {
 
+            // A new song will play, so if any song is playing, it will stop
             newPlay = true;
 
+            // Get pressed song index
             int musicIdx = window.getSelectedIdx();
 
+            // Update miniplayer
             window.updatePlayingSongInfo(Musics.get(musicIdx)[0], Musics.get(musicIdx)[1], Musics.get(musicIdx)[2]);
 
             currentSong = Songs.get(musicIdx);
@@ -348,7 +381,7 @@ public class Player {
             playerPaused = false;
 
 
-            // Ativando os botões
+            // Enabling all the buttons, because a song is going to play
             window.setEnabledPlayPauseButton(playerEnabled);
             window.updatePlayPauseButtonIcon(playerPaused);
             window.setEnabledScrubber(playerEnabled);
@@ -358,10 +391,12 @@ public class Player {
             window.setEnabledShuffleButton(playerEnabled);
             window.setEnabledRepeatButton(playerEnabled);
 
+            // Decode and but the song on buffer
             device = FactoryRegistry.systemRegistry().createAudioDevice();
             device.open(decoder = new Decoder());
             bitstream = new Bitstream(currentSong.getBufferedInputStream());
 
+            // Skipping to frame 0, setting currentFrame to 0 and calling playing to start the song
             skipToFrame(0);
             newPlay = false;
             currentFrame = 0;
@@ -385,29 +420,45 @@ public class Player {
         return currentSong.getMsPerFrame();
     }
 
+
+    /**
+     * Responsible for playing the frames of the current Song.
+     *
+     * @param currentSong current playing song
+     */
     public void playing(Song currentSong){
 
+        // Thread start
         Thread t_playingSong = new Thread(new Runnable() {
             @Override
             public void run() {
 
                 fullLength = getSongLength(currentSong);
 
-                // Adicionando o tempo no início, mas n atualiza a cada segundo
-
                 ms = getSongMsPerFrame(currentSong);
                 ms = (int) ms;
 
                 // window.setTime((int) (currentFrame * ms), (int) fullLength);
 
+                /*
+                Song reproduction happens the while below. It depends on the playerPaused and on the
+                newPlay.
+                */
                 while (true && !playerPaused) {
                     lock.lock();
                     try {
                         if (!playNextFrame()){
                             next();
                         }
+
+                        /*
+                        newPlay is true when a new Song is going to play and the current HAS to stop.
+                        For example: If next or previous is clicked, or Play Now, or the song ends.
+                        */
                         if (newPlay) break;
+                        // Jumping frames
                         currentFrame +=1;
+                        // Updating time on miniplayer
                         window.setTime((int) (currentFrame * ms), (int) fullLength);
                     } catch (JavaLayerException e) {
                         e.printStackTrace();
@@ -423,6 +474,10 @@ public class Player {
 
     }
 
+    /**
+     * Stops the reproductions of the song and resets to the state of Non-playing.
+     *
+     */
     public void stop() {
         if (!playerPaused) {
             playerPaused = true;
@@ -437,29 +492,45 @@ public class Player {
         }
     }
 
-    //public void Play
 
+    /**
+     * Either pauses or resumes the current playing song with the boolean PlayerPaused
+     */
     public void PlayPause() {
 
         if (!playerPaused) {
             playerPaused = true;
-            window.updatePlayPauseButtonIcon(playerPaused);
+            window.updatePlayPauseButtonIcon(playerPaused); // Updating button state
         } else {
             playerPaused = false;
-            window.updatePlayPauseButtonIcon(playerPaused);
-            playing(currentSong);
+            window.updatePlayPauseButtonIcon(playerPaused); // Updating button state
+            playing(currentSong); // Resuming the song
         }
     }
 
-
+    /**
+     * Jumps to next song according to the Musics and Songs array.
+     *
+     *
+     * @throws JavaLayerException
+     * @throws FileNotFoundException
+     */
     public void next() throws JavaLayerException, FileNotFoundException {
         newPlay = true;
         int musicIdx = 0;
         int actual = Songs.indexOf(currentSong);
 
+        // If the song is not in the last position, get the next song's index
         if (actual != Songs.size() - 1) {
             musicIdx = actual + 1;
         }
+
+        /*
+        Checking if the song is the last one and repeat is pressed OR if the song is not the last one.
+
+        If none of these are true, it means that the song is the last one and repeat is no pressed, which
+        means the player will stop.
+        */
         if (actual == Songs.size() - 1 && repeat == true || actual != Songs.size() - 1) {
             currentSong = Songs.get(musicIdx);
             window.updatePlayingSongInfo(Musics.get(musicIdx)[0], Musics.get(musicIdx)[1], Musics.get(musicIdx)[2]);
@@ -467,6 +538,7 @@ public class Player {
             playerPaused = false;
             window.updatePlayPauseButtonIcon(playerPaused);
 
+            // Setting new song's info, skipping to frame 0 and setting currentFrame to 0.
             device = FactoryRegistry.systemRegistry().createAudioDevice();
             device.open(decoder = new Decoder());
             bitstream = new Bitstream(currentSong.getBufferedInputStream());
@@ -474,11 +546,19 @@ public class Player {
             skipToFrame(0);
             newPlay = false;
             currentFrame = 0;
+            // Calling playing to start next song
             playing(currentSong);
         }
 
     }
 
+    /**
+     * Jumps to previous song according to the Music and Songs array.
+     *
+     *
+     * @throws JavaLayerException
+     * @throws FileNotFoundException
+     */
     public void previous() throws JavaLayerException, FileNotFoundException {
         newPlay = true;
         int musicIdx = Songs.size() - 1;
@@ -495,6 +575,8 @@ public class Player {
         playerPaused = false;
         window.updatePlayPauseButtonIcon(playerPaused);
 
+
+        // Setting new song's info, skipping to frame 0 and setting currentFrame to 0.
         device = FactoryRegistry.systemRegistry().createAudioDevice();
         device.open(decoder = new Decoder());
         bitstream = new Bitstream(currentSong.getBufferedInputStream());
@@ -502,30 +584,17 @@ public class Player {
         skipToFrame(0);
         newPlay = false;
         currentFrame = 0;
+        // Calling playing to start next song
         playing(currentSong);
     }
-    /*
-    public void playAgain() throws JavaLayerException, FileNotFoundException {
 
-        newPlay = true;
-        int actual = Songs.indexOf(currentSong);
-
-        window.updatePlayingSongInfo(Musics.get(actual)[0], Musics.get(actual)[1], Musics.get(actual)[2]);
-
-        playerPaused = false;
-        window.updatePlayPauseButtonIcon(playerPaused);
-
-        device = FactoryRegistry.systemRegistry().createAudioDevice();
-        device.open(decoder = new Decoder());
-        bitstream = new Bitstream(currentSong.getBufferedInputStream());
-
-        skipToFrame(0);
-        newPlay = false;
-        currentFrame = 0;
-        playing(currentSong);
-
-    }*/
-
+    /**
+     * Changes to shuffle or back to normal.
+     *
+     *
+     * @throws JavaLayerException
+     * @throws FileNotFoundException
+     */
     public void randomSong() throws JavaLayerException, FileNotFoundException {
 
         if(shuffle == false){
@@ -534,21 +603,16 @@ public class Player {
             int idxCurrent = Songs.indexOf(currentSong);
 
             aux.clear();
-            aux.addAll(Songs); // Copying array
+            aux.addAll(Songs); // Array that is going to keep original order
 
-            System.out.println(Musics);
-            System.out.println(Songs);
+            Songs.remove(idxCurrent); // Removing current song to insert in the beginning afterwards
 
-            Songs.remove(idxCurrent);
-            Musics.remove(idxCurrent);
+            Collections.shuffle(Songs); // Shuffling list
+            Songs.add(0, currentSong); // Inserting current song to start
 
-            Collections.shuffle(Songs);
-            Songs.add(0, currentSong); // Adding music to start
+            Musics.clear(); // Clearing Musics array to update it with random order
 
-            System.out.println(Songs);
-
-            Musics.clear();
-
+            // This loop is responsible for refilling Musics array just as add to queue does.
             for (int i = 0; i < Songs.size(); i++) {
 
                 String[] songInfo = Songs.get(i).getDisplayInfo();
@@ -565,10 +629,12 @@ public class Player {
 
             Songs.clear();
 
+            // Copying all of the songs in aux to Songs
             Songs.addAll(aux);
 
             Musics.clear();
 
+            // This loop is responsible for refilling Musics array just as add to queue does.
             for (int i = 0; i < Songs.size(); i++) {
 
                 String[] songInfo = Songs.get(i).getDisplayInfo();

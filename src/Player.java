@@ -11,6 +11,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.Collections;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -40,16 +41,18 @@ public class Player {
     private Song currentSong;
     private int currentFrame = 0;
     private int newFrame;
+    private float fullLength;
+    private float ms;
 
     private final Lock lock = new ReentrantLock();
 
     private ArrayList<String[]> Musics = new ArrayList<String[]>();
 
-    private ArrayList<String[]> RandomQueue = new ArrayList<String[]>();
-
     private String[][] queue = {};
 
     private ArrayList<Song> Songs = new ArrayList<Song>();
+
+    private ArrayList<Song> aux = new ArrayList<Song>(); // Array auxiliar para shuffle
 
     public Player() {
 
@@ -80,11 +83,12 @@ public class Player {
         ActionListener buttonListenerShuffle = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if(shuffle == false){
-                    shuffle = true;
-                }
-                else{
-                    shuffle = false;
+                try {
+                    randomSong();
+                } catch (JavaLayerException ex) {
+                    ex.printStackTrace();
+                } catch (FileNotFoundException ex) {
+                    ex.printStackTrace();
                 }
             }
         };
@@ -270,19 +274,24 @@ public class Player {
         try {
             Song newSong = window.getNewSong();
 
-            Songs.add(newSong);
+            if (newSong != null) {
+                Songs.add(newSong);
 
-            String[] songInfo = newSong.getDisplayInfo();
+                String[] songInfo = newSong.getDisplayInfo();
 
-            Musics.add(songInfo);
+                Musics.add(songInfo);
 
-            getQueueAsArrayAndUpdate();
+                getQueueAsArrayAndUpdate();
+            }
+
+
 
         }
         catch(InvalidDataException | BitstreamException | UnsupportedTagException | IOException e){
             System.out.println(e);
         }
     }
+
 
     public void removeFromQueue() {
         try {
@@ -343,9 +352,11 @@ public class Player {
             window.setEnabledPlayPauseButton(playerEnabled);
             window.updatePlayPauseButtonIcon(playerPaused);
             window.setEnabledScrubber(playerEnabled);
-            // window.setEnabledStopButton(playerEnabled);
+            window.setEnabledStopButton(playerEnabled);
             window.setEnabledNextButton(playerEnabled);
             window.setEnabledPreviousButton(playerEnabled);
+            window.setEnabledShuffleButton(playerEnabled);
+            window.setEnabledRepeatButton(playerEnabled);
 
             device = FactoryRegistry.systemRegistry().createAudioDevice();
             device.open(decoder = new Decoder());
@@ -380,24 +391,20 @@ public class Player {
             @Override
             public void run() {
 
-                float fullLength = getSongLength(currentSong);
+                fullLength = getSongLength(currentSong);
 
                 // Adicionando o tempo no início, mas n atualiza a cada segundo
 
-                float ms = getSongMsPerFrame(currentSong);
+                ms = getSongMsPerFrame(currentSong);
                 ms = (int) ms;
 
+                // window.setTime((int) (currentFrame * ms), (int) fullLength);
 
                 while (true && !playerPaused) {
                     lock.lock();
                     try {
                         if (!playNextFrame()){
-                            if(shuffle == false){
-                                next();
-                            }
-                            else{
-                                randomSong();
-                            }
+                            next();
                         }
                         if (newPlay) break;
                         currentFrame +=1;
@@ -414,13 +421,19 @@ public class Player {
         });
         t_playingSong.start();
 
-
     }
 
     public void stop() {
         if (!playerPaused) {
             playerPaused = true;
             window.updatePlayPauseButtonIcon(playerPaused);
+            window.resetMiniPlayer();
+            window.setEnabledScrubberArea(false);
+            window.setEnabledPreviousButton(false);
+            window.setEnabledNextButton(false);
+            window.setEnabledRepeatButton(false);
+            window.setEnabledShuffleButton(false);
+            window.setEnabledStopButton(false);
         }
     }
 
@@ -443,13 +456,13 @@ public class Player {
         newPlay = true;
         int musicIdx = 0;
         int actual = Songs.indexOf(currentSong);
+
         if (actual != Songs.size() - 1) {
             musicIdx = actual + 1;
         }
         if (actual == Songs.size() - 1 && repeat == true || actual != Songs.size() - 1) {
             currentSong = Songs.get(musicIdx);
             window.updatePlayingSongInfo(Musics.get(musicIdx)[0], Musics.get(musicIdx)[1], Musics.get(musicIdx)[2]);
-
 
             playerPaused = false;
             window.updatePlayPauseButtonIcon(playerPaused);
@@ -515,30 +528,56 @@ public class Player {
 
     public void randomSong() throws JavaLayerException, FileNotFoundException {
 
-        newPlay = true;
+        if(shuffle == false){
+            shuffle = true;
 
-        int numberofSongs = Songs.size();
+            int idxCurrent = Songs.indexOf(currentSong);
 
-        Random generator = new Random();
+            aux.clear();
+            aux.addAll(Songs); // Copying array
 
-        int idxMusicSelect = generator.nextInt(numberofSongs);
+            System.out.println(Musics);
+            System.out.println(Songs);
 
+            Songs.remove(idxCurrent);
+            Musics.remove(idxCurrent);
 
-        currentSong = Songs.get(idxMusicSelect);
+            Collections.shuffle(Songs);
+            Songs.add(0, currentSong); // Adding music to start
 
-        window.updatePlayingSongInfo(Musics.get(idxMusicSelect)[0], Musics.get(idxMusicSelect)[1], Musics.get(idxMusicSelect)[2]);
+            System.out.println(Songs);
 
-        playerPaused = false;
-        window.updatePlayPauseButtonIcon(playerPaused);
+            Musics.clear();
 
-        device = FactoryRegistry.systemRegistry().createAudioDevice();
-        device.open(decoder = new Decoder());
-        bitstream = new Bitstream(currentSong.getBufferedInputStream());
+            for (int i = 0; i < Songs.size(); i++) {
 
-        skipToFrame(0);
-        newPlay = false;
-        currentFrame = 0;
-        playing(currentSong);
+                String[] songInfo = Songs.get(i).getDisplayInfo();
+
+                Musics.add(songInfo);
+
+            }
+
+            System.out.println(Musics);
+        }
+        else{
+
+            shuffle = false;
+
+            Songs.clear();
+
+            Songs.addAll(aux);
+
+            Musics.clear();
+
+            for (int i = 0; i < Songs.size(); i++) {
+
+                String[] songInfo = Songs.get(i).getDisplayInfo();
+
+                Musics.add(songInfo);
+
+            }
+        }
+
 
     }
     //</editor-fold>
